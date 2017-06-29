@@ -2,10 +2,16 @@
 " no more windows in that direction, forwards the operation to tmux.
 " Additionally, <C-\> toggles between last active vim splits/tmux panes.
 
-if exists("g:loaded_tmux_navigator") || &cp || v:version < 700
-  finish
-endif
+" if exists("g:loaded_tmux_navigator") || &cp || v:version < 700
+"   finish
+" endif
 let g:loaded_tmux_navigator = 1
+
+function! s:Debug(string)
+  if exists('g:dodebug')
+    echom a:string
+  endif
+endfunction
 
 if !exists("g:tmux_navigator_save_on_switch")
   let g:tmux_navigator_save_on_switch = 0
@@ -55,8 +61,10 @@ augroup END
 " Like `wincmd` but also change tmux panes instead of vim windows when needed.
 function! g:TmuxWinCmd(direction)
   if g:InTmuxSession()
+    call s:Debug('in tmux session' . ' / ' . a:direction)
     call g:TmuxAwareNavigate(a:direction)
   else
+    call s:Debug('NOT in tmux session' . ' / ' . a:direction)
     call g:VimNavigate(a:direction)
   endif
 endfunction
@@ -83,6 +91,7 @@ function! g:TmuxAwareNavigate(direction)
   " a) we're toggling between the last tmux pane;
   " b) we tried switching windows in vim but it didn't have effect.
   if g:ShouldForwardNavigationBackToTmux(tmux_last_pane, at_tab_page_edge)
+    call s:Debug('should forward navigation back to tmux')
     if g:tmux_navigator_save_on_switch == 1
       try
         update " save the active buffer. See :help update
@@ -101,6 +110,9 @@ function! g:TmuxAwareNavigate(direction)
     endif
     let g:tmux_is_last_pane = 1
   else
+    if g:dodebug
+      call s:Debug('NOT forwarding navigation to tmux')
+    endif
     let g:tmux_is_last_pane = 0
   endif
 endfunction
